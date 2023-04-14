@@ -73,7 +73,7 @@ public function afterSave($insert, $changedAttributes)
     if (array_key_exists('password_hash', $changedAttributes)) {
         /** @var Jwt $jwtServ */
         $jwtServ = Yii::$app->get('jwt', false);
-        $jwtServ?->tokenStorage->deleteAllForUser(1);
+        $jwtServ?->tokenStorage->deleteAllForUser($this->id);
     }
 
     parent::afterSave($insert, $changedAttributes);
