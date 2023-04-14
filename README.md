@@ -67,6 +67,15 @@ Edit `jwt` component to your configuration file,
 
 For examle add method  `afterSave()` to model `app\models\User`
 
-    ```php
-      coming soon
-    ```
+```php
+public function afterSave($insert, $changedAttributes)
+    // Purge the user tokens when the password is changed
+    if (array_key_exists('password_hash', $changedAttributes)) {
+        /** @var Jwt $jwtServ */
+        $jwtServ = Yii::$app->get('jwt', false);
+        $jwtServ?->tokenStorage->deleteAllForUser(1);
+    }
+
+    parent::afterSave($insert, $changedAttributes);
+}
+```

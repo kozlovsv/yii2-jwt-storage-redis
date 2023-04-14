@@ -74,10 +74,14 @@ class TokenStorageRedis extends TokenStorageCache
      * Delete all tokens for user from storage
      * @param int $userId User Id
      * @return bool True if token deleted
+     * @throws Exception
      */
     public function deleteAllForUser(int $userId): bool
     {
-        //todo implemet coming soon
-        return false;
+        $tokenKeys = $this->redis->keys($this->buildKeyForUser($userId) . ':*');
+        foreach ($tokenKeys as $key) {
+            $this->deleteValue($key);
+        }
+        return true;
     }
 }
