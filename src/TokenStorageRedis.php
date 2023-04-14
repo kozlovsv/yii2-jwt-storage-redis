@@ -80,6 +80,9 @@ class TokenStorageRedis extends TokenStorageCache
         $this->removeNonExistKeys($listKey);
         //Add token key to the end of the list for user.
         $this->redis->rpush($listKey, $key);
+        //Refresh duration
+        $ttl = intval($this->redis->ttl($listKey));
+        if ($ttl < $duration) $this->redis->expire($listKey, $duration);
         return parent::set($userId, $tokenId, $duration);
     }
 
