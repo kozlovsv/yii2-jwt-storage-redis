@@ -7,9 +7,21 @@ Component provides token storage in redis cache
 This component should be used if your application uses Redis cache, and you need functionality that allows you
 to delete all saved access and refresh tokens for a specific user.
 
-The component remembers the cache keys of saved tokens, in
-list for a specific user. This allows you to remove all issued tokens for this user from the storage.
-This will close access to all services for all issued tokens
+The standard application cache component, which is used in the TokenStorageCache class,
+converts all keys to an MD5 hash before writing or reading, so there is no way to get all the keys for a specific user.
+All keys in the cache look like: 402849137963e1945d01315c4f61662f
+
+The TokenStorageRedis component executes the Redis commands directly, and does not use the commands of the standard cache class.
+Due to this, the keys are not formatted in MD5, but are stored in the cache in their original form.
+
+Fotrat of the key api:token:user_id:token_id.
+
+Example: api:token:1425:9f3898ca702c9c9f4991c63dc7eb0e13.
+
+This formatting allows you to get all the keys for a specific user that are stored in the cache by the search mask.
+For example, api:token:1425:* will retrieve all stored tokens for user ID 1425.
+
+This makes it possible to remove all of that user's keys from the store.
 
 For example, when you need to log out of all authorized devices for a specific user.
 

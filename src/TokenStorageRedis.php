@@ -5,17 +5,18 @@ namespace kozlovsv\jwtredis;
 use kozlovsv\jwtauth\TokenStorageCache;
 use Yii;
 use yii\base\InvalidConfigException;
+use yii\db\Exception;
 use yii\redis\Connection;
 
 /**
  * Service provides token storage in redis cache
  *
- * When the [[set]] method is called, the cache key by which the token was stored in a special list in redis chache.
- * @see https://redis.io/docs/data-types/lists/
+ * The standard methods of working with the cache are overridden, since in the basic cache component
+ * the keys are encoded by the MD5 algorithm when writing and reading.
+ * Because of this, there is no way to get all the keys for a specific user by the search mask.
+ * Now writing-reading to the cache occurs directly with Redis commands.
  *
- * The list is associated with a specific user by its ID.
- * This list will allow you to delete all tokens for a specific user when calling the [[deleteAllForUser]] method
- * This functionality will allow you to log out from all user devices that have been authorized
+ * Thanks to this, it became possible to implement the deleteAllForUser function
  *
  * @package kozlovsv\jwtauth
  * @author Kozlov Sergey <kozlovsv78@gmail.com>
@@ -41,51 +42,33 @@ class TokenStorageRedis extends TokenStorageCache
         $this->redis = $this->cache->redis;
     }
 
-
     /**
-     * Build formated cache key and with MD5 hashed
-     *
-     * @param int $userId User Id
-     * @param string $tokenId Unique token ID, for example hash MD5 or SHA-1, store in jti claim JWT tocken
-     * @return string MD5 formated hashed cache key
+     * @inheritDoc
+     * @throws Exception
      */
-    protected function buildKey(int $userId, string $tokenId): string
-    {
-        return  md5(parent::buildKey($userId, $tokenId));
+    protected function _exists(string $key): bool{
+        return (bool) $this->redis->executeCommand('EXISTS', [$key]);
     }
 
     /**
-     * Build MD5 hashed key for user keys list.
-     *
-     * @param int $userId User Id
-     * @return string
+     * @inheritDoc
      */
-    protected function buildKeyForList(int $userId): string
+    protected function setValue(string $key, $value, int $duration): bool
     {
-        return  md5(parent::buildKeyForUser($userId) . 'kl');
+        if ($duration == 0) {
+            return (bool) $this->redis->executeCommand('SET', [$key, $value]);
+        }
+        $duration = (int) ($duration * 1000);
+        return (bool) $this->redis->executeCommand('SET', [$key, $value, 'PX', $duration]);
     }
 
     /**
-     * Save token to storage
-     * @param int $userId User Id
-     * @param string $tokenId Unique token ID, for example hash MD5 or SHA-1, store in jti claim JWT tocken
-     * @param int $duration the number of seconds in which the cached value will expire. 0 means never expire.
-     * @return bool True if token exists
+     * @inheritDoc
+     * @throws Exception
      */
-    public function set(int $userId, string $tokenId, int $duration = 0): bool
-    {
-        $key = $this->buildKey($userId, $tokenId);
-        //store key in  token ids list for user
-        $listKey = $this->buildKeyForList($userId);
-        $this->removeNonExistKeys($listKey);
-        //Add token key to the end of the list for user.
-        $this->redis->rpush($listKey, $key);
-        //Refresh duration
-        $ttl = intval($this->redis->ttl($listKey));
-        if ($ttl < $duration) $this->redis->expire($listKey, $duration);
-        return parent::set($userId, $tokenId, $duration);
+    protected function deleteValue(string $key): bool {
+        return (bool) $this->redis->executeCommand('DEL', [$key]);
     }
-
 
     /**
      * Delete all tokens for user from storage
@@ -94,19 +77,7 @@ class TokenStorageRedis extends TokenStorageCache
      */
     public function deleteAllForUser(int $userId): bool
     {
-        //Not implemented because the standard Cache component does not have required functionality
         //todo implemet coming soon
         return false;
-    }
-
-    /**
-     * Checking, if the key not exists in the cache, delete it from list
-     * @param string $listKey
-     * @return void
-     */
-    protected function removeNonExistKeys(string $listKey)
-    {
-        //$list = $this->redis->lrange($listKey, 0, -1);
-        //todo implemet coming soon
     }
 }
