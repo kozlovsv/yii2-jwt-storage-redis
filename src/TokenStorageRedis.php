@@ -5,7 +5,6 @@ namespace kozlovsv\jwtredis;
 use kozlovsv\jwtauth\TokenStorageCache;
 use Yii;
 use yii\base\InvalidConfigException;
-use yii\di\Instance;
 use yii\redis\Connection;
 
 /**
@@ -24,9 +23,9 @@ use yii\redis\Connection;
 class TokenStorageRedis extends TokenStorageCache
 {
     /**
-     * @var yii\redis\Connection|string|array
+     * @var yii\redis\Connection
      */
-    protected $redis = 'redis';
+    protected $redis ;
 
     /**
      * @inheritDoc
@@ -36,7 +35,10 @@ class TokenStorageRedis extends TokenStorageCache
     public function init()
     {
         parent::init();
-        $this->redis = Instance::ensure($this->redis, Connection::class);
+        if (empty($this->cache->redis) || ! ($this->cache->redis instanceof Connection)) {
+            throw new InvalidConfigException('The application cache component  "Yii::$app->cache" must be instance of yii\redis\Cache.');
+        }
+        $this->redis = $this->cache->redis;
     }
 
 
@@ -101,7 +103,7 @@ class TokenStorageRedis extends TokenStorageCache
      */
     protected function removeNonExistKeys(string $listKey)
     {
-        $list = $this->redis->lrange($listKey, 0, -1);
+        //$list = $this->redis->lrange($listKey, 0, -1);
         //todo implemet coming soon
     }
 }
