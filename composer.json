@@ -1,0 +1,52 @@
+{
+  "name": "kozlovsv/yii2-jwt-storage-redis",
+  "description": "Redis storage for yii2-jwt-auth component",
+  "keywords": [
+    "yii2",
+    "extension",
+    "jwt",
+    "auth",
+    "api",
+    "rest",
+    "yii2-jwt-auth",
+    "redis"
+  ],
+  "type": "yii2-extension",
+  "minimum-stability": "stable",
+  "homepage": "https://github.com/kozlovsv/yii2-jwt-storage-redis",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kozlov Sergey",
+      "email": "kozlovsv78@gmail.com",
+      "homepage": "https://atonex.ru/"
+    }
+  ],
+  "require": {
+    "php": ">=7.2",
+    "yiisoft/yii2": "~2.0.14",
+    "kozlovsv/yii2-jwt-auth": "@dev",
+    "yiisoft/yii2-redis": ">=2.0.6",
+    "ext-json": "*"
+  },
+  "config": {
+    "process-timeout": 1800,
+    "fxp-asset": {
+      "enabled": false
+    },
+    "allow-plugins": {
+      "yiisoft/yii2-composer": true
+    }
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://asset-packagist.org"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "kozlovsv\\jwtredis\\": "src/"
+    }
+  }
+}
